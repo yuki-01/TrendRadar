@@ -1757,832 +1757,468 @@ def render_html_content(
     update_info: Optional[Dict] = None,
 ) -> str:
     """渲染HTML内容"""
-    html = """
-    <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>热点新闻分析 · TrendRadar</title>
+    html = """<!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <title>热点新闻分析 · TrendRadar</title>
 
-  <!-- html2canvas 保留，供“保存为图片/分段保存”使用 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <style>
+        :root{
+            /* 可在这里调整主题色与模糊强度 */
+            --bg-grad-1: #edf1f7;
+            --bg-grad-2: #e9eef8;
+            --glass-bg: rgba(255,255,255,0.58);
+            --glass-dark: rgba(10,10,14,0.6);
+            --glass-border: rgba(255,255,255,0.35);
+            --blur: 14px;
 
-  <style>
-    :root{
-      /* 可在这里调整主题色与模糊强度 */
-      --bg-grad-1: #edf1f7;
-      --bg-grad-2: #e9eef8;
-      --glass-bg: rgba(255,255,255,0.58);
-      --glass-dark: rgba(10,10,14,0.6);
-      --glass-border: rgba(255,255,255,0.35);
-      --blur: 14px;
+            --text-strong: #0f172a; /* 黑色系 */
+            --text-normal: #1f2937;
+            --text-muted: #6b7280;
+            --text-invert: #ffffff; /* 白色 */
 
-      --text-strong: #0f172a; /* 黑色系 */
-      --text-normal: #1f2937;
-      --text-muted: #6b7280;
-      --text-invert: #ffffff; /* 白色 */
+            --primary: #2563eb; /* 链接与交互蓝 */
+            --primary-visited: #7c3aed; /* 已读紫 */
+            --hot: #ef4444;
+            --warm: #f59e0b;
+            --ok: #10b981;
 
-      --primary: #2563eb; /* 链接与交互蓝 */
-      --primary-visited: #7c3aed; /* 已读紫 */
-      --hot: #ef4444;
-      --warm: #f59e0b;
-      --ok: #10b981;
-
-      --card-gap: 16px;
-      --radius: 14px;
-      --container-w: 1200px; /* 宽屏最大宽度 */
-      --column-gap: 16px;
-      --section-gap: 18px;
-    }
-
-    *{ box-sizing: border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      color: var(--text-normal);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC","Hiragino Sans GB","Microsoft YaHei", sans-serif;
-      line-height: 1.5;
-      background:
-        radial-gradient(1200px 800px at 10% -10%, #e0e7ff 0%, transparent 50%),
-        radial-gradient(1100px 700px at 110% 0%, #fce7f3 0%, transparent 45%),
-        radial-gradient(900px 900px at 50% 120%, #dcfce7 0%, transparent 45%),
-        linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
-      background-attachment: fixed;
-    }
-
-    /* 顶部导航（透明模糊） */
-    .navbar{
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      backdrop-filter: saturate(140%) blur(var(--blur));
-      -webkit-backdrop-filter: saturate(140%) blur(var(--blur));
-      background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.4));
-      border-bottom: 1px solid var(--glass-border);
-    }
-    .nav-inner{
-      max-width: var(--container-w);
-      margin: 0 auto;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand{
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      color: var(--text-strong);
-      letter-spacing: 0.2px;
-    }
-    .brand-mark{
-      width: 28px; height: 28px; border-radius: 9px;
-      background: linear-gradient(135deg,#8b5cf6,#06b6d4);
-      box-shadow: 0 4px 16px rgba(99,102,241,0.35);
-    }
-
-    .nav-spacer{ flex: 1; }
-
-    .nav-links{
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .nav-link{
-      padding: 8px 12px;
-      border-radius: 10px;
-      color: var(--text-strong);
-      text-decoration: none;
-      font-weight: 600;
-      transition: background .2s ease, transform .15s ease;
-    }
-    .nav-link:hover{
-      background: rgba(0,0,0,0.06);
-      transform: translateY(-1px);
-    }
-    .nav-link.primary{
-      color: var(--text-invert);
-      background: linear-gradient(135deg,#2563eb,#7c3aed);
-      box-shadow: 0 6px 18px rgba(37,99,235,.35);
-    }
-    .nav-link.primary:hover{ filter: brightness(1.03); }
-
-    /* 移动端菜单按钮 */
-    .nav-toggle{
-      display: none;
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--glass-border);
-      background: var(--glass-bg);
-      backdrop-filter: blur(var(--blur));
-      -webkit-backdrop-filter: blur(var(--blur));
-      align-items: center; justify-content: center;
-      color: var(--text-strong);
-    }
-    .nav-toggle:active{ transform: scale(.98); }
-    .nav-mobile{
-      display: none;
-      padding: 8px 14px 16px;
-      border-top: 1px solid var(--glass-border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
-      backdrop-filter: blur(var(--blur));
-      -webkit-backdrop-filter: blur(var(--blur));
-    }
-    .nav-mobile a{
-      display: block;
-      text-decoration: none;
-      color: var(--text-strong);
-      font-weight: 600;
-      padding: 10px 10px;
-      border-radius: 10px;
-    }
-    .nav-mobile a:hover{
-      background: rgba(0,0,0,0.06);
-    }
-
-    /* 顶部信息+操作区（玻璃卡片） */
-    .page-wrap{
-      max-width: var(--container-w);
-      margin: 16px auto;
-      padding: 0 14px 20px;
-    }
-    .header-card{
-      position: relative;
-      border-radius: var(--radius);
-      border: 1px solid var(--glass-border);
-      background: var(--glass-bg);
-      backdrop-filter: blur(var(--blur));
-      -webkit-backdrop-filter: blur(var(--blur));
-      padding: 16px 16px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.06);
-      margin-top: 10px;
-    }
-    .header-top{
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .title{
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text-strong);
-      letter-spacing: .3px;
-    }
-    .badges{
-      display: flex; gap: 8px; flex-wrap: wrap;
-    }
-    .badge{
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-invert);
-      border-radius: 999px;
-      padding: 6px 10px;
-      background: linear-gradient(135deg,#0ea5e9,#6366f1);
-    }
-    .header-grid{
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 10px;
-    }
-    .info-box{
-      border-radius: 12px;
-      border: 1px dashed rgba(0,0,0,.06);
-      background: rgba(255,255,255,0.55);
-      padding: 10px 12px;
-      min-height: 58px;
-    }
-    .info-label{
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    .info-value{
-      font-size: 16px; font-weight: 800; color: var(--text-strong);
-    }
-
-    .header-actions{
-      display: flex; gap: 10px; flex-wrap: wrap;
-      margin-top: 12px;
-    }
-    .btn{
-      appearance: none; border: none; cursor: pointer;
-      padding: 10px 14px; border-radius: 12px;
-      background: linear-gradient(135deg,#334155,#0f172a);
-      color: var(--text-invert); font-weight: 700; font-size: 13px;
-      box-shadow: 0 6px 18px rgba(15,23,42,.25);
-      transition: transform .15s ease, filter .2s ease;
-    }
-    .btn:hover{ filter: brightness(1.05); transform: translateY(-1px); }
-    .btn:active{ transform: translateY(0); }
-
-    /* 主体内容：宽屏两列并列卡片（不同主题） */
-    .content-grid{
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: var(--column-gap);
-    }
-    @media (max-width: 1100px){
-      .content-grid{ grid-template-columns: 1fr; }
-    }
-
-    /* 词组卡片（玻璃/磨砂） */
-    .group-card{
-      border-radius: var(--radius);
-      border: 1px solid var(--glass-border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.28));
-      backdrop-filter: blur(calc(var(--blur) * .9));
-      -webkit-backdrop-filter: blur(calc(var(--blur) * .9));
-      box-shadow: 0 6px 24px rgba(0,0,0,.06);
-      padding: 14px 14px;
-    }
-    .group-head{
-      display: flex; align-items: center; justify-content: space-between;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-      margin-bottom: var(--section-gap);
-    }
-    .group-title{
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    }
-    .group-name{
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--text-strong);
-    }
-    .group-count{
-      font-size: 12px; font-weight: 800; color: var(--text-invert);
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: linear-gradient(135deg,#64748b,#1f2937);
-    }
-    .group-count.hot{ background: linear-gradient(135deg,#ef4444,#f97316); }
-    .group-count.warm{ background: linear-gradient(135deg,#f59e0b,#a855f7); }
-    .group-index{
-      font-size: 12px; color: var(--text-muted); font-weight: 600;
-    }
-
-    /* 每条新闻条目（更紧凑密度） */
-    .news-item{
-      display: grid;
-      grid-template-columns: 28px 1fr;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      position: relative;
-    }
-    .news-item:last-child{ border-bottom: none; }
-    .news-number{
-      width: 24px; height: 24px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 800; color: var(--text-normal);
-      background: rgba(15,23,42,.06);
-      margin-top: 2px;
-    }
-    .news-meta{
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin-bottom: 4px;
-    }
-    .source{
-      font-size: 12px; color: var(--text-muted); font-weight: 700;
-    }
-    .rank-chip{
-      font-size: 11px; color: var(--text-invert); font-weight: 800;
-      padding: 2px 8px; border-radius: 999px;
-      background: #6b7280;
-    }
-    .rank-chip.top{ background: var(--hot); }
-    .rank-chip.high{ background: var(--warm); color: #111827; }
-    .time-chip{
-      font-size: 11px; color: var(--text-muted); font-weight: 600;
-    }
-    .count-chip{
-      font-size: 11px; color: var(--ok); font-weight: 800;
-    }
-    .news-title{
-      font-size: 15px; line-height: 1.45; color: var(--text-strong);
-      margin: 0;
-    }
-    .news-link{
-      color: var(--primary); text-decoration: none;
-    }
-    .news-link:hover{ text-decoration: underline; }
-    .news-link:visited{ color: var(--primary-visited); }
-
-    .tag-new{
-      position: absolute; right: 0; top: 8px;
-      font-size: 10px; font-weight: 900;
-      color: #92400e;
-      background: #fbbf24;
-      padding: 2px 6px;
-      border-radius: 6px;
-      letter-spacing: .3px;
-    }
-
-    /* 新增新闻专区卡片 */
-    .new-section{
-      border-radius: var(--radius);
-      border: 1px solid var(--glass-border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.35));
-      backdrop-filter: blur(var(--blur));
-      -webkit-backdrop-filter: blur(var(--blur));
-      box-shadow: 0 6px 24px rgba(0,0,0,.06);
-      padding: 14px;
-      margin-top: 16px;
-    }
-    .new-title{
-      font-size: 16px; font-weight: 900; color: var(--text-strong);
-      margin-bottom: 10px;
-    }
-    .new-source{
-      font-size: 13px; font-weight: 800; color: var(--text-muted);
-      margin: 12px 0 6px;
-      padding-bottom: 6px; border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-    .new-item{
-      display: grid; grid-template-columns: 24px 40px 1fr; gap: 10px;
-      padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-    .new-item:last-child{ border-bottom: none; }
-    .new-num{
-      width: 20px; height: 20px; border-radius: 999px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 800; color: var(--text-normal);
-      background: rgba(15,23,42,.06);
-      margin-top: 2px;
-    }
-    .new-rank{
-      font-size: 11px; font-weight: 900; color: #111827;
-      background: #e5e7eb; border-radius: 10px;
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 34px; height: 20px; padding: 0 6px;
-    }
-    .new-rank.top{ background: #fecaca; color: #991b1b; }
-    .new-rank.high{ background: #fde68a; color: #92400e; }
-    .new-text{
-      font-size: 14px; color: var(--text-strong);
-    }
-
-    /* 错误块（请求失败平台） */
-    .error-card{
-      border-radius: var(--radius);
-      border: 1px solid rgba(220,38,38,0.2);
-      background: rgba(254,242,242,0.75);
-      backdrop-filter: blur(calc(var(--blur) * .6));
-      -webkit-backdrop-filter: blur(calc(var(--blur) * .6));
-      padding: 12px 14px;
-      color: #991b1b;
-      margin: 16px 0;
-    }
-    .error-title{
-      font-weight: 900; font-size: 14px; margin-bottom: 6px;
-      color: #b91c1c;
-    }
-    .error-list{ margin: 0; padding-left: 18px; }
-    .error-list li{ font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size: 12px; padding: 2px 0; }
-
-    /* 页脚（简洁玻璃） */
-    .footer{
-      margin-top: 18px;
-      border-radius: var(--radius);
-      border: 1px solid var(--glass-border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.35));
-      backdrop-filter: blur(var(--blur));
-      -webkit-backdrop-filter: blur(var(--blur));
-      padding: 14px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-    .footer a{
-      color: #374151; font-weight: 700; text-decoration: none;
-    }
-    .footer a:hover{ text-decoration: underline; }
-
-    /* 响应式细节优化 */
-    @media (max-width: 820px){
-      .header-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    @media (max-width: 560px){
-      .nav-links{ display: none; }
-      .nav-toggle{ display: inline-flex; margin-left: auto; }
-      .header-grid{ grid-template-columns: 1fr 1fr; }
-      .page-wrap{ padding-bottom: 26px; }
-    }
-  </style>
-</head>
-<body>
-  <!-- 顶部导航 -->
-  <nav class="navbar">
-    <div class="nav-inner">
-      <div class="brand">
-        <span class="brand-mark"></span>
-        TrendRadar
-      </div>
-
-      <div class="nav-spacer"></div>
-
-      <div class="nav-links" aria-label="主导航">
-        <a class="nav-link primary" href="https://news.nekobox.xyz" target="_self" rel="noopener">新闻</a>
-        <a class="nav-link" href="https://jellyfin.nekobox.xyz" target="_blank" rel="noopener">影视库</a>
-        <a class="nav-link" href="https://download.nekobox.xyz" target="_blank" rel="noopener">影视下载</a>
-      </div>
-
-      <button class="nav-toggle" aria-label="展开菜单" onclick="toggleMobileNav()">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="nav-mobile" id="navMobile">
-      <a href="https://news.nekobox.xyz" target="_self" rel="noopener">新闻</a>
-      <a href="https://jellyfin.nekobox.xyz" target="_blank" rel="noopener">影视库</a>
-      <a href="https://download.nekobox.xyz" target="_blank" rel="noopener">影视下载</a>
-    </div>
-  </nav>
-
-  <main class="page-wrap">
-    <!-- 顶部信息卡+操作 -->
-    <section class="header-card">
-      <div class="header-top">
-        <div class="title">热点新闻分析</div>
-        <div class="badges">
-          <!-- 这里保留两个示例徽章，实际文案由脚本填充 -->
-          <span class="badge" id="reportType">加载中</span>
-          <span class="badge" id="statsBadge">统计中</span>
-        </div>
-      </div>
-
-      <div class="header-grid">
-        <div class="info-box">
-          <div class="info-label">报告类型</div>
-          <div class="info-value" id="infoType">-</div>
-        </div>
-        <div class="info-box">
-          <div class="info-label">新闻总数</div>
-          <div class="info-value" id="infoTotal">-</div>
-        </div>
-        <div class="info-box">
-          <div class="info-label">热点新闻</div>
-          <div class="info-value" id="infoHot">-</div>
-        </div>
-        <div class="info-box">
-          <div class="info-label">生成时间</div>
-          <div class="info-value" id="infoTime">-</div>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <button class="btn" onclick="saveAsImage()">保存为图片</button>
-        <button class="btn" onclick="saveAsMultipleImages()">分段保存</button>
-      </div>
-    </section>
-
-    <!-- 错误卡（由脚本插入） -->
-    <div id="errorHost"></div>
-
-    <!-- 主题分组网格：宽屏并列，窄屏堆叠 -->
-    <section class="content-grid" id="groupsHost">
-      <!-- 这里由脚本把每个词组渲染为 group-card 并列显示 -->
-    </section>
-
-    <!-- 新增新闻区（由脚本插入） -->
-    <section class="new-section" id="newSection" style="display:none">
-      <div class="new-title" id="newTitleText">本次新增热点</div>
-      <div id="newList"></div>
-    </section>
-
-    <footer class="footer">
-      由 <strong>TrendRadar</strong> 生成 ·
-      <a href="https://github.com/sansan0/TrendRadar" target="_blank" rel="noopener">GitHub 开源项目</a>
-      <div id="updateInfo" style="margin-top:4px;"></div>
-    </footer>
-  </main>
-
-  <script>
-    // 简单移动端菜单开合
-    function toggleMobileNav(){
-      const el = document.getElementById('navMobile');
-      if(!el) return;
-      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-    }
-
-    // 以下脚本桥接原先 Python 生成的 HTML 内容逻辑：
-    // 我们将通过“标记锚点”节点，把已有的内容段（错误列表、词组列表、新增列表、统计信息）插入到新的样式结构里。
-    // 你可以在后端拼装时，保留与原先相同的文本片段，然后在这里定位并注入。
-
-    // 页面加载后，从现有服务器端渲染的静态内容读取信息并填充
-    document.addEventListener('DOMContentLoaded', function(){
-      // 兼容：如果后端还是输出整段静态 HTML，可以用 data-* 或隐藏元素承载数值
-      // 这里示例按你原始 render_html_content 中的信息来源映射：
-      // 1. 报告类型、新闻总数、热点新闻数、生成时间
-      try {
-        // 直接扫描页面中现有的文本（若你继续后端生成整块 HTML，可在生成后再把对应文本塞进这些 id）
-        const headerTextMaps = window.__TrendRadarHeader || {};
-        // 若后端不提供全局对象，也可直接在后端写入以下四个元素的 innerText
-        document.getElementById('infoType').innerText = headerTextMaps.type || document.querySelector('.header .header-title')?.innerText || '-';
-        document.getElementById('infoTotal').innerText = headerTextMaps.total || '-';
-        document.getElementById('infoHot').innerText = headerTextMaps.hot || '-';
-        document.getElementById('infoTime').innerText = headerTextMaps.time || '-';
-
-        // 同步徽章
-        document.getElementById('reportType').innerText = headerTextMaps.type || '分析报告';
-        document.getElementById('statsBadge').innerText = (headerTextMaps.hot ? ('热点 ' + headerTextMaps.hot) : '热点统计');
-      } catch(e){}
-
-      // 2. 将原有“请求失败的平台”列表注入 errorHost
-      const failedBlock = document.querySelector('.error-section, .error-card-old');
-      if(failedBlock){
-        const host = document.getElementById('errorHost');
-        // 将旧块内容重排为新卡片样式
-        const errs = failedBlock.querySelectorAll('li');
-        if(errs.length){
-          const card = document.createElement('div');
-          card.className = 'error-card';
-          card.innerHTML = '<div class="error-title">⚠️ 请求失败的平台</div>';
-          const ul = document.createElement('ul');
-          ul.className = 'error-list';
-          errs.forEach(li => {
-            const item = document.createElement('li');
-            item.textContent = li.textContent.trim();
-            ul.appendChild(item);
-          });
-          card.appendChild(ul);
-          host.appendChild(card);
+            --card-gap: 16px;
+            --radius: 14px;
+            --container-w: 1200px; /* 宽屏最大宽度 */
+            --column-gap: 16px;
+            --section-gap: 18px;
         }
-        // 隐藏旧块
-        failedBlock.style.display = 'none';
-      }
 
-      // 3. 将原有每个词组与其内部新闻列表搬运成 group-card
-      // 兼容旧结构：查找旧的 .word-group 容器
-      const oldGroups = document.querySelectorAll('.word-group');
-      const newHost = document.getElementById('groupsHost');
-      if(oldGroups.length){
-        oldGroups.forEach((g, idx) => {
-          const head = g.querySelector('.word-header');
-          const nameEl = g.querySelector('.word-name');
-          const countEl = g.querySelector('.word-count');
-          const indexEl = g.querySelector('.word-index');
-          const items = g.querySelectorAll('.news-item');
-
-          const card = document.createElement('div');
-          card.className = 'group-card';
-
-          // 头部
-          const headDiv = document.createElement('div');
-          headDiv.className = 'group-head';
-
-          const left = document.createElement('div');
-          left.className = 'group-title';
-
-          const name = document.createElement('div');
-          name.className = 'group-name';
-          name.textContent = nameEl ? nameEl.textContent.trim() : ('主题 ' + (idx+1));
-
-          const count = document.createElement('div');
-          count.className = 'group-count';
-          const rawCount = countEl ? countEl.textContent.trim() : '';
-          count.textContent = rawCount || '0 条';
-          // 根据数值加热度色
-          const n = parseInt((rawCount||'0').replace(/\D+/g,'')||'0',10);
-          if(n >= 10) count.classList.add('hot'); else if(n >= 5) count.classList.add('warm');
-
-          left.appendChild(name);
-          left.appendChild(count);
-
-          const right = document.createElement('div');
-          right.className = 'group-index';
-          right.textContent = indexEl ? indexEl.textContent.trim() : ((idx+1) + '/' + oldGroups.length);
-
-          headDiv.appendChild(left);
-          headDiv.appendChild(right);
-          card.appendChild(headDiv);
-
-          // 列表
-          items.forEach((item, i) => {
-            const row = document.createElement('div');
-            row.className = 'news-item';
-
-            // 序号
-            const num = document.createElement('div');
-            num.className = 'news-number';
-            num.textContent = (i+1).toString();
-            row.appendChild(num);
-
-            const content = document.createElement('div');
-
-            // 元信息
-            const meta = document.createElement('div');
-            meta.className = 'news-meta';
-
-            const sourceName = item.querySelector('.source-name');
-            if(sourceName){
-              const s = document.createElement('span');
-              s.className = 'source';
-              s.textContent = sourceName.textContent.trim();
-              meta.appendChild(s);
-            }
-
-            // rank
-            const rankSpan = item.querySelector('.rank-num');
-            if(rankSpan){
-              const r = document.createElement('span');
-              r.className = 'rank-chip';
-              const rankText = rankSpan.textContent.trim();
-              r.textContent = rankText;
-              if(rankSpan.classList.contains('top')) r.classList.add('top');
-              else if(rankSpan.classList.contains('high')) r.classList.add('high');
-              meta.appendChild(r);
-            }
-
-            // 时间
-            const timeSpan = item.querySelector('.time-info');
-            if(timeSpan){
-              const t = document.createElement('span');
-              t.className = 'time-chip';
-              t.textContent = timeSpan.textContent.trim();
-              meta.appendChild(t);
-            }
-
-            // 次数
-            const countInfo = item.querySelector('.count-info');
-            if(countInfo){
-              const c = document.createElement('span');
-              c.className = 'count-chip';
-              c.textContent = countInfo.textContent.trim();
-              meta.appendChild(c);
-            }
-
-            content.appendChild(meta);
-
-            // 标题
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'news-title';
-            const oldLink = item.querySelector('.news-link');
-            if(oldLink){
-              const a = document.createElement('a');
-              a.className = 'news-link';
-              a.href = oldLink.getAttribute('href');
-              a.target = '_blank';
-              a.rel = 'noopener';
-              a.textContent = oldLink.textContent.trim();
-              titleDiv.appendChild(a);
-            }else{
-              titleDiv.textContent = (item.querySelector('.news-title')?.textContent || '').trim();
-            }
-            content.appendChild(titleDiv);
-
-            row.appendChild(content);
-
-            // NEW
-            if(item.classList.contains('new')){
-              const tag = document.createElement('div');
-              tag.className = 'tag-new';
-              tag.textContent = 'NEW';
-              row.appendChild(tag);
-            }
-
-            card.appendChild(row);
-          });
-
-          newHost.appendChild(card);
-
-          // 隐藏旧组
-          g.style.display = 'none';
-        });
-      }
-
-      // 4. 新增新闻区搬运
-      const oldNewSection = document.querySelector('.new-section');
-      if(oldNewSection){
-        // 读取文本汇总
-        const title = document.getElementById('newTitleText');
-        const summaryText = oldNewSection.querySelector('.new-section-title')?.textContent?.trim();
-        if(summaryText) title.textContent = summaryText;
-
-        const newListHost = document.getElementById('newList');
-        const groups = oldNewSection.querySelectorAll('.new-source-group');
-        if(groups.length){
-          document.getElementById('newSection').style.display = 'block';
-          groups.forEach(g => {
-            const name = g.querySelector('.new-source-title')?.textContent?.trim() || '来源';
-            const head = document.createElement('div');
-            head.className = 'new-source';
-            head.textContent = name;
-            newListHost.appendChild(head);
-
-            g.querySelectorAll('.new-item').forEach((item, i) => {
-              const row = document.createElement('div');
-              row.className = 'new-item';
-
-              const num = document.createElement('div');
-              num.className = 'new-num';
-              num.textContent = (i+1).toString();
-
-              const rank = document.createElement('div');
-              const rankOld = item.querySelector('.new-item-rank');
-              rank.className = 'new-rank';
-              rank.textContent = rankOld?.textContent?.trim() || '?';
-              if(rankOld?.classList.contains('top')) rank.classList.add('top');
-              else if(rankOld?.classList.contains('high')) rank.classList.add('high');
-
-              const txt = document.createElement('div');
-              txt.className = 'new-text';
-              const link = item.querySelector('a');
-              if(link){
-                const a = document.createElement('a');
-                a.className = 'news-link';
-                a.href = link.href;
-                a.target = '_blank';
-                a.rel = 'noopener';
-                a.textContent = link.textContent.trim();
-                txt.appendChild(a);
-              }else{
-                txt.textContent = (item.querySelector('.new-item-title')?.textContent || '').trim();
-              }
-
-              row.appendChild(num);
-              row.appendChild(rank);
-              row.appendChild(txt);
-              newListHost.appendChild(row);
-            });
-          });
-
-          // 隐藏旧新增段
-          if(!oldNewSection.isSameNode(document.getElementById('newSection'))){
-            oldNewSection.style.display = 'none';
-          }
+        *{ box-sizing: border-box; }
+        html,body{ height:100%; }
+        body{
+            margin:0;
+            color: var(--text-normal);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC","Hiragino Sans GB","Microsoft YaHei", sans-serif;
+            line-height: 1.5;
+            background:
+            radial-gradient(1200px 800px at 10% -10%, #e0e7ff 0%, transparent 50%),
+            radial-gradient(1100px 700px at 110% 0%, #fce7f3 0%, transparent 45%),
+            radial-gradient(900px 900px at 50% 120%, #dcfce7 0%, transparent 45%),
+            linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
+            background-attachment: fixed;
         }
-      }
 
-      // 5. 更新页脚版本提示（若后端有写）
-      const updateInline = document.querySelector('.footer-content span[style*="ea580c"]');
-      if(updateInline){
-        document.getElementById('updateInfo').innerHTML = updateInline.innerHTML;
-      }
-    });
+        /* 顶部导航（透明模糊） */
+        .navbar{
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: saturate(140%) blur(var(--blur));
+            -webkit-backdrop-filter: saturate(140%) blur(var(--blur));
+            background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.4));
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .nav-inner{
+            max-width: var(--container-w);
+            margin: 0 auto;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            color: var(--text-strong);
+            letter-spacing: 0.2px;
+        }
+        .brand-mark{
+            width: 28px; height: 28px; border-radius: 9px;
+            background: linear-gradient(135deg,#8b5cf6,#06b6d4);
+            box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+        }
 
-    // 保留原按钮函数：saveAsImage / saveAsMultipleImages
-    async function saveAsImage() {
-      const button = event.target;
-      const originalText = button.textContent;
+        .nav-spacer{ flex: 1; }
 
-      try {
-        button.textContent = '生成中...';
-        button.disabled = true;
-        window.scrollTo(0, 0);
-        await new Promise(r => setTimeout(r, 200));
+        .nav-links{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-link{
+            padding: 8px 12px;
+            border-radius: 10px;
+            color: var(--text-strong);
+            text-decoration: none;
+            font-weight: 600;
+            transition: background .2s ease, transform .15s ease;
+        }
+        .nav-link:hover{
+            background: rgba(0,0,0,0.06);
+            transform: translateY(-1px);
+        }
+        .nav-link.primary{
+            color: var(--text-invert);
+            background: linear-gradient(135deg,#2563eb,#7c3aed);
+            box-shadow: 0 6px 18px rgba(37,99,235,.35);
+        }
+        .nav-link.primary:hover{ filter: brightness(1.03); }
 
-        // 截图时可隐藏导航
-        const navbar = document.querySelector('.navbar');
-        const toggle = document.querySelector('.nav-toggle');
-        const navMobile = document.getElementById('navMobile');
-        const oldDisplay = navMobile?.style.display;
-        if(navMobile) navMobile.style.display = 'none';
+        /* 移动端菜单按钮 */
+        .nav-toggle{
+            display: none;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            align-items: center; justify-content: center;
+            color: var(--text-strong);
+        }
+        .nav-toggle:active{ transform: scale(.98); }
+        .nav-mobile{
+            display: none;
+            padding: 8px 14px 16px;
+            border-top: 1px solid var(--glass-border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+        }
+        .nav-mobile a{
+            display: block;
+            text-decoration: none;
+            color: var(--text-strong);
+            font-weight: 600;
+            padding: 10px 10px;
+            border-radius: 10px;
+        }
+        .nav-mobile a:hover{
+            background: rgba(0,0,0,0.06);
+        }
 
-        const canvas = await html2canvas(document.body, {
-          backgroundColor: '#ffffff',
-          scale: 1.5,
-          useCORS: true,
-          logging: false
-        });
+        /* 顶部信息+操作区（玻璃卡片） */
+        .page-wrap{
+            max-width: var(--container-w);
+            margin: 16px auto;
+            padding: 0 14px 20px;
+        }
+        .header-card{
+            position: relative;
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            padding: 16px 16px;
+            box-shadow: 0 6px 24px rgba(0,0,0,.06);
+            margin-top: 10px;
+        }
+        .header-top{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .title{
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-strong);
+            letter-spacing: .3px;
+        }
+        .badges{
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .badge{
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-invert);
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: linear-gradient(135deg,#0ea5e9,#6366f1);
+        }
+        .header-grid{
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0,1fr));
+            gap: 10px;
+        }
+        .info-box{
+            border-radius: 12px;
+            border: 1px dashed rgba(0,0,0,.06);
+            background: rgba(255,255,255,0.55);
+            padding: 10px 12px;
+            min-height: 58px;
+        }
+        .info-label{
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .info-value{
+            font-size: 16px; font-weight: 800; color: var(--text-strong);
+        }
 
-        if(navMobile) navMobile.style.display = oldDisplay || '';
+        .header-actions{
+            display: flex; gap: 10px; flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .btn{
+            appearance: none; border: none; cursor: pointer;
+            padding: 10px 14px; border-radius: 12px;
+            background: linear-gradient(135deg,#334155,#0f172a);
+            color: var(--text-invert); font-weight: 700; font-size: 13px;
+            box-shadow: 0 6px 18px rgba(15,23,42,.25);
+            transition: transform .15s ease, filter .2s ease;
+        }
+        .btn:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+        .btn:active{ transform: translateY(0); }
 
-        const link = document.createElement('a');
-        const now = new Date();
-        const filename = `TrendRadar_热点新闻分析_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.png`;
-        link.download = filename;
-        link.href = canvas.toDataURL('image/png', 1.0);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        /* 主体内容：宽屏两列并列卡片（不同主题） */
+        .content-grid{
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: var(--column-gap);
+        }
+        @media (max-width: 1100px){
+            .content-grid{ grid-template-columns: 1fr; }
+        }
 
-        button.textContent = '保存成功!';
-        setTimeout(()=>{ button.textContent = originalText; button.disabled = false; }, 1500);
-      } catch (e){
-        button.textContent = '保存失败';
-        setTimeout(()=>{ button.textContent = originalText; button.disabled = false; }, 1500);
-      }
-    }
+        /* 词组卡片（玻璃/磨砂） */
+        .group-card{
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.28));
+            backdrop-filter: blur(calc(var(--blur) * .9));
+            -webkit-backdrop-filter: blur(calc(var(--blur) * .9));
+            box-shadow: 0 6px 24px rgba(0,0,0,.06);
+            padding: 14px 14px;
+        }
+        .group-head{
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            margin-bottom: var(--section-gap);
+        }
+        .group-title{
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .group-name{
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--text-strong);
+        }
+        .group-count{
+            font-size: 12px; font-weight: 800; color: var(--text-invert);
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: linear-gradient(135deg,#64748b,#1f2937);
+        }
+        .group-count.hot{ background: linear-gradient(135deg,#ef4444,#f97316); }
+        .group-count.warm{ background: linear-gradient(135deg,#f59e0b,#a855f7); }
+        .group-index{
+            font-size: 12px; color: var(--text-muted); font-weight: 600;
+        }
 
-    async function saveAsMultipleImages() {
-      // 这里沿用你原先的分段截图逻辑可行；为了简化，与新的布局结合，建议直接截图 body，或按 group-card 分段截图。
-      // 若需要严格复刻原逻辑，可将原函数拷贝进来使用。
-      const button = event.target;
-      const originalText = button.textContent;
-      button.textContent = '请使用单图保存或后续增强';
-      setTimeout(()=> button.textContent = originalText, 1500);
-    }
-  </script>
-</body>
-</html>"""
+        /* 每条新闻条目（更紧凑密度） */
+        .news-item{
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .news-item:last-child{ border-bottom: none; }
+        .news-number{
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800; color: var(--text-normal);
+            background: rgba(15,23,42,.06);
+            margin-top: 2px;
+        }
+        .news-meta{
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+        .source{
+            font-size: 12px; color: var(--text-muted); font-weight: 700;
+        }
+        .rank-chip{
+            font-size: 11px; color: var(--text-invert); font-weight: 800;
+            padding: 2px 8px; border-radius: 999px;
+            background: #6b7280;
+        }
+        .rank-chip.top{ background: var(--hot); }
+        .rank-chip.high{ background: var(--warm); color: #111827; }
+        .time-chip{
+            font-size: 11px; color: var(--text-muted); font-weight: 600;
+        }
+        .count-chip{
+            font-size: 11px; color: var(--ok); font-weight: 800;
+        }
+        .news-title{
+            font-size: 15px; line-height: 1.45; color: var(--text-strong);
+            margin: 0;
+        }
+        .news-link{
+            color: var(--primary); text-decoration: none;
+        }
+        .news-link:hover{ text-decoration: underline; }
+        .news-link:visited{ color: var(--primary-visited); }
+
+        .tag-new{
+            position: absolute; right: 0; top: 8px;
+            font-size: 10px; font-weight: 900;
+            color: #92400e;
+            background: #fbbf24;
+            padding: 2px 6px;
+            border-radius: 6px;
+            letter-spacing: .3px;
+        }
+
+        /* 新增新闻专区卡片 */
+        .new-section{
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.35));
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            box-shadow: 0 6px 24px rgba(0,0,0,.06);
+            padding: 14px;
+            margin-top: 16px;
+        }
+        .new-title{
+            font-size: 16px; font-weight: 900; color: var(--text-strong);
+            margin-bottom: 10px;
+        }
+        .new-source{
+            font-size: 13px; font-weight: 800; color: var(--text-muted);
+            margin: 12px 0 6px;
+            padding-bottom: 6px; border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .new-item{
+            display: grid; grid-template-columns: 24px 40px 1fr; gap: 10px;
+            padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .new-item:last-child{ border-bottom: none; }
+        .new-num{
+            width: 20px; height: 20px; border-radius: 999px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800; color: var(--text-normal);
+            background: rgba(15,23,42,.06);
+            margin-top: 2px;
+        }
+        .new-rank{
+            font-size: 11px; font-weight: 900; color: #111827;
+            background: #e5e7eb; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 34px; height: 20px; padding: 0 6px;
+        }
+        .new-rank.top{ background: #fecaca; color: #991b1b; }
+        .new-rank.high{ background: #fde68a; color: #92400e; }
+        .new-text{
+            font-size: 14px; color: var(--text-strong);
+        }
+
+        /* 错误块（请求失败平台） */
+        .error-card{
+            border-radius: var(--radius);
+            border: 1px solid rgba(220,38,38,0.2);
+            background: rgba(254,242,242,0.75);
+            backdrop-filter: blur(calc(var(--blur) * .6));
+            -webkit-backdrop-filter: blur(calc(var(--blur) * .6));
+            padding: 12px 14px;
+            color: #991b1b;
+            margin: 16px 0;
+        }
+        .error-title{
+            font-weight: 900; font-size: 14px; margin-bottom: 6px;
+            color: #b91c1c;
+        }
+        .error-list{ margin: 0; padding-left: 18px; }
+        .error-list li{ font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size: 12px; padding: 2px 0; }
+
+        /* 页脚（简洁玻璃） */
+        .footer{
+            margin-top: 18px;
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.35));
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            padding: 14px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .footer a{
+            color: #374151; font-weight: 700; text-decoration: none;
+        }
+        .footer a:hover{ text-decoration: underline; }
+
+        /* 响应式细节优化 */
+        @media (max-width: 820px){
+            .header-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+        }
+        @media (max-width: 560px){
+            .nav-links{ display: none; }
+            .nav-toggle{ display: inline-flex; margin-left: auto; }
+            .header-grid{ grid-template-columns: 1fr 1fr; }
+            .page-wrap{ padding-bottom: 26px; }
+        }
+        </style>
+    </head>
+    <body>
+        <nav class="navbar">
+        <div class="nav-inner">
+            <div class="brand">
+            <span class="brand-mark"></span>
+            TrendRadar
+            </div>
+
+            <div class="nav-spacer"></div>
+
+            <div class="nav-links" aria-label="主导航">
+            <a class="nav-link primary" href="https://news.nekobox.xyz" target="_self" rel="noopener">新闻</a>
+            <a class="nav-link" href="https://jellyfin.nekobox.xyz" target="_blank" rel="noopener">影视库</a>
+            <a class="nav-link" href="https://download.nekobox.xyz" target="_blank" rel="noopener">影视下载</a>
+            </div>
+
+            <button class="nav-toggle" aria-label="展开菜单" onclick="toggleMobileNav()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            </button>
+        </div>
+
+        <div class="nav-mobile" id="navMobile">
+            <a href="https://news.nekobox.xyz" target="_self" rel="noopener">新闻</a>
+            <a href="https://jellyfin.nekobox.xyz" target="_blank" rel="noopener">影视库</a>
+            <a href="https://download.nekobox.xyz" target="_blank" rel="noopener">影视下载</a>
+        </div>
+        </nav>
+
+        <main class="page-wrap">
+        <section class="header-card">
+            <div class="header-top">
+            <div class="title">热点新闻分析</div>
+            <div class="badges">
+                <span class="badge" id="reportType">加载中</span>
+                <span class="badge" id="statsBadge">统计中</span>
+            </div>
+            </div>
+
+            <div class="header-grid">
+            <div class="info-box">
+                <div class="info-label">报告类型</div>
+                <div class="info-value" id="infoType">"""
+
+    # Python Logic Continuation (Starting from where the prefix left off)
+    # -------------------------------------------------------------------
 
     # 处理报告类型显示
     if is_daily_summary:
@@ -2595,42 +2231,54 @@ def render_html_content(
     else:
         html += "实时分析"
 
-    html += """</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">新闻总数</span>
-                        <span class="info-value">"""
+    html += """</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">新闻总数</div>
+                <div class="info-value" id="infoTotal">"""
 
-    html += f"{total_titles} 条"
+    html += str(total_titles)
 
-    # 计算筛选后的热点新闻数量
-    hot_news_count = sum(len(stat["titles"]) for stat in report_data["stats"])
+    html += """</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">热点新闻</div>
+                <div class="info-value" id="infoHot">"""
 
-    html += """</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">热点新闻</span>
-                        <span class="info-value">"""
+    html += str(len(report_data["stats"]))
 
-    html += f"{hot_news_count} 条"
-
-    html += """</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">生成时间</span>
-                        <span class="info-value">"""
+    html += """</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">生成时间</div>
+                <div class="info-value" id="infoTime">"""
 
     now = get_beijing_time()
     html += now.strftime("%m-%d %H:%M")
 
-    html += """</span>
-                    </div>
-                </div>
+    html += """</div>
+            </div>
             </div>
             
-            <div class="content">"""
+            <div class="header-actions">
+                <button class="btn" onclick="saveAsImage()">保存为图片</button>
+                <button class="btn" onclick="saveAsMultipleImages()">分段保存</button>
+            </div>
+        </section>
 
-    # 处理失败ID错误信息
+        <div id="errorHost"></div>
+
+        <section class="content-grid" id="groupsHost">
+            </section>
+
+        <section class="new-section" id="newSection" style="display:none">
+            <div class="new-title" id="newTitleText">本次新增热点</div>
+            <div id="newList"></div>
+        </section>
+
+        <div class="content" style="display:none;">""" # <-- 默认隐藏原始内容
+
+    # Process failure error information (Original Python Logic)
     if report_data["failed_ids"]:
         html += """
                 <div class="error-section">
@@ -2642,14 +2290,14 @@ def render_html_content(
                     </ul>
                 </div>"""
 
-    # 处理主要统计数据
+    # Process main statistics data (Original Python Logic)
     if report_data["stats"]:
         total_count = len(report_data["stats"])
 
         for i, stat in enumerate(report_data["stats"], 1):
             count = stat["count"]
 
-            # 确定热度等级
+            # Determine heat level class
             if count >= 10:
                 count_class = "hot"
             elif count >= 5:
@@ -2659,6 +2307,7 @@ def render_html_content(
 
             escaped_word = html_escape(stat["word"])
 
+            # The old structure remains here to be consumed by the JS script
             html += f"""
                 <div class="word-group">
                     <div class="word-header">
@@ -2669,7 +2318,6 @@ def render_html_content(
                         <div class="word-index">{i}/{total_count}</div>
                     </div>"""
 
-            # 处理每个词组下的新闻标题，给每条新闻标上序号
             for j, title_data in enumerate(stat["titles"], 1):
                 is_new = title_data.get("is_new", False)
                 new_class = "new" if is_new else ""
@@ -2678,17 +2326,16 @@ def render_html_content(
                     <div class="news-item {new_class}">
                         <div class="news-number">{j}</div>
                         <div class="news-content">
-                            <div class="news-header">
+                            <div class="news-meta">
                                 <span class="source-name">{html_escape(title_data["source_name"])}</span>"""
 
-                # 处理排名显示
+                # Rank display
                 ranks = title_data.get("ranks", [])
                 if ranks:
                     min_rank = min(ranks)
                     max_rank = max(ranks)
                     rank_threshold = title_data.get("rank_threshold", 10)
 
-                    # 确定排名等级
                     if min_rank <= 3:
                         rank_class = "top"
                     elif min_rank <= rank_threshold:
@@ -2696,36 +2343,32 @@ def render_html_content(
                     else:
                         rank_class = ""
 
-                    if min_rank == max_rank:
-                        rank_text = str(min_rank)
-                    else:
-                        rank_text = f"{min_rank}-{max_rank}"
+                    rank_text = str(min_rank) if min_rank == max_rank else f"{min_rank}-{max_rank}"
 
                     html += f'<span class="rank-num {rank_class}">{rank_text}</span>'
 
-                # 处理时间显示
+                # Time display
                 time_display = title_data.get("time_display", "")
                 if time_display:
-                    # 简化时间显示格式，将波浪线替换为~
                     simplified_time = (
                         time_display.replace(" ~ ", "~")
                         .replace("[", "")
                         .replace("]", "")
                     )
                     html += (
-                        f'<span class="time-info">{html_escape(simplified_time)}</span>'
+                        f'<span class="time-chip">{html_escape(simplified_time)}</span>'
                     )
 
-                # 处理出现次数
+                # Count info
                 count_info = title_data.get("count", 1)
                 if count_info > 1:
-                    html += f'<span class="count-info">{count_info}次</span>'
+                    html += f'<span class="count-chip">{count_info}次</span>'
 
                 html += """
                             </div>
                             <div class="news-title">"""
 
-                # 处理标题和链接
+                # Title and link
                 escaped_title = html_escape(title_data["title"])
                 link_url = title_data.get("mobile_url") or title_data.get("url", "")
 
@@ -2743,10 +2386,10 @@ def render_html_content(
             html += """
                 </div>"""
 
-    # 处理新增新闻区域
+    # Process new titles section (Original Python Logic)
     if report_data["new_titles"]:
         html += f"""
-                <div class="new-section">
+                <div class="new-section-old">
                     <div class="new-section-title">本次新增热点 (共 {report_data['total_new_count']} 条)</div>"""
 
         for source_data in report_data["new_titles"]:
@@ -2757,11 +2400,9 @@ def render_html_content(
                     <div class="new-source-group">
                         <div class="new-source-title">{escaped_source} · {titles_count}条</div>"""
 
-            # 为新增新闻也添加序号
             for idx, title_data in enumerate(source_data["titles"], 1):
                 ranks = title_data.get("ranks", [])
 
-                # 处理新增新闻的排名显示
                 rank_class = ""
                 if ranks:
                     min_rank = min(ranks)
@@ -2784,7 +2425,6 @@ def render_html_content(
                             <div class="new-item-content">
                                 <div class="new-item-title">"""
 
-                # 处理新增新闻的链接
                 escaped_title = html_escape(title_data["title"])
                 link_url = title_data.get("mobile_url") or title_data.get("url", "")
 
@@ -2806,28 +2446,155 @@ def render_html_content(
                 </div>"""
 
     html += """
-            </div>
-            
-            <div class="footer">
-                <div class="footer-content">
-                    由 <span class="project-name">TrendRadar</span> 生成 · 
-                    <a href="https://github.com/sansan0/TrendRadar" target="_blank" class="footer-link">
-                        GitHub 开源项目
-                    </a>"""
+        </div>
+        
+        <footer class="footer">
+            由 <strong>TrendRadar</strong> 生成 ·
+            <a href="https://github.com/sansan0/TrendRadar" target="_blank" rel="noopener">GitHub 开源项目</a>
+            <div id="updateInfo" style="margin-top:4px;">"""
 
     if update_info:
         html += f"""
-                    <br>
-                    <span style="color: #ea580c; font-weight: 500;">
-                        发现新版本 {update_info['remote_version']}，当前版本 {update_info['current_version']}
-                    </span>"""
+                <span style="color: #ea580c; font-weight: 500;">
+                    发现新版本 {update_info['remote_version']}，当前版本 {update_info['current_version']}
+                </span>"""
 
     html += """
-                </div>
             </div>
-        </div>
+        </footer>
+        </main>
         
         <script>
+            // 1. 移动端导航控制
+            function toggleMobileNav(){
+                const el = document.getElementById('navMobile');
+                if(!el) return;
+                // 使用 CSS 样式控制显示/隐藏
+                el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            }
+
+            // 2. 页面加载与UI重构逻辑 (将原始结构转换为卡片样式)
+            document.addEventListener('DOMContentLoaded', function(){
+                const container = document.querySelector('.content'); // 原始数据容器
+
+                // A. 填充顶部的统计信息
+                try {
+                    // 假设 Python 在后端提供了这些值，或直接从 HTML 中读取
+                    const headerTextMaps = {
+                        type: document.getElementById('infoType').textContent.trim() || '分析报告',
+                        total: document.getElementById('infoTotal').textContent.trim() || '-',
+                        hot: document.getElementById('infoHot').textContent.trim() || '-',
+                        time: document.getElementById('infoTime').textContent.trim() || '-'
+                    };
+                    document.getElementById('reportType').innerText = headerTextMaps.type || '分析报告';
+                    document.getElementById('statsBadge').innerText = (headerTextMaps.hot && headerTextMaps.hot !== '-') ? ('热点 ' + headerTextMaps.hot) : '热点统计';
+                } catch(e){}
+
+                // B. 错误卡片重构
+                const failedBlock = container.querySelector('.error-section');
+                if(failedBlock){
+                    const host = document.getElementById('errorHost');
+                    const errs = failedBlock.querySelectorAll('.error-item'); 
+                    if(errs.length){
+                        const card = document.createElement('div');
+                        card.className = 'error-card'; 
+                        card.innerHTML = '<div class="error-title">⚠️ 请求失败的平台</div>';
+                        const ul = document.createElement('ul');
+                        ul.className = 'error-list';
+                        errs.forEach(li => {
+                            const item = document.createElement('li');
+                            item.textContent = li.textContent.trim();
+                            ul.appendChild(item);
+                        });
+                        card.appendChild(ul);
+                        host.appendChild(card);
+                    }
+                }
+
+                // C. 主题卡片重构 (将 .word-group 转换为 .group-card)
+                const oldGroups = container.querySelectorAll('.word-group');
+                const newHost = document.getElementById('groupsHost');
+                
+                if(oldGroups.length){
+                    oldGroups.forEach((g, idx) => {
+                        const nameEl = g.querySelector('.word-name');
+                        const countEl = g.querySelector('.word-count');
+                        const items = g.querySelectorAll('.news-item');
+
+                        const card = document.createElement('div');
+                        card.className = 'group-card'; 
+
+                        // 头部
+                        const headDiv = document.createElement('div');
+                        headDiv.className = 'group-head';
+
+                        const left = document.createElement('div');
+                        left.className = 'group-title';
+
+                        const name = document.createElement('div');
+                        name.className = 'group-name';
+                        name.textContent = nameEl ? nameEl.textContent.trim() : ('主题 ' + (idx+1));
+
+                        const count = document.createElement('div');
+                        const rawCount = countEl ? countEl.textContent.trim() : '0';
+                        count.textContent = rawCount;
+                        // 样式类名保留原有的 hot/warm 逻辑
+                        count.className = 'group-count ' + (countEl ? countEl.className.replace('word-count', '') : '');
+
+                        left.appendChild(name);
+                        left.appendChild(count);
+
+                        const right = document.createElement('div');
+                        right.className = 'group-index';
+                        right.textContent = (idx+1) + '/' + oldGroups.length;
+
+                        headDiv.appendChild(left);
+                        headDiv.appendChild(right);
+                        card.appendChild(headDiv);
+
+                        // 列表内容：直接克隆原始新闻条目并插入
+                        items.forEach(item => {
+                            const clonedItem = item.cloneNode(true);
+                            // 移除 news-item 上的 NEW 标签，因为 .tag-new 已经处理了
+                            const tagNew = clonedItem.querySelector('.tag-new');
+                            if (tagNew) tagNew.remove(); 
+                            card.appendChild(clonedItem);
+                        });
+
+                        newHost.appendChild(card);
+                    });
+                }
+
+                // D. 新增新闻区重构
+                const oldNewSection = container.querySelector('.new-section-old');
+                if(oldNewSection){
+                    const newListHost = document.getElementById('newList');
+                    const groups = oldNewSection.querySelectorAll('.new-source-group');
+                    
+                    if(groups.length){
+                        // 修正标题
+                        const title = document.getElementById('newTitleText');
+                        const summaryText = oldNewSection.querySelector('.new-section-title')?.textContent?.trim();
+                        if(summaryText) title.textContent = summaryText;
+
+                        document.getElementById('newSection').style.display = 'block';
+                        groups.forEach(g => {
+                            const name = g.querySelector('.new-source-title')?.textContent?.trim() || '来源';
+                            const head = document.createElement('div');
+                            head.className = 'new-source';
+                            head.textContent = name;
+                            newListHost.appendChild(head);
+
+                            g.querySelectorAll('.new-item').forEach(item => {
+                                const clonedItem = item.cloneNode(true);
+                                newListHost.appendChild(clonedItem);
+                            });
+                        });
+                    }
+                }
+            });
+
+            // 3. 保存为单张图片 (保留功能，适配新容器)
             async function saveAsImage() {
                 const button = event.target;
                 const originalText = button.textContent;
@@ -2837,38 +2604,26 @@ def render_html_content(
                     button.disabled = true;
                     window.scrollTo(0, 0);
                     
-                    // 等待页面稳定
                     await new Promise(resolve => setTimeout(resolve, 200));
                     
-                    // 截图前隐藏按钮
-                    const buttons = document.querySelector('.save-buttons');
-                    buttons.style.visibility = 'hidden';
+                    // 截图前隐藏按钮区域和移动端导航
+                    const buttons = document.querySelector('.header-actions');
+                    if(buttons) buttons.style.visibility = 'hidden';
+                    const navMobile = document.getElementById('navMobile');
+                    if(navMobile) navMobile.style.display = 'none';
                     
-                    // 再次等待确保按钮完全隐藏
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    const container = document.querySelector('.container');
+                    const container = document.querySelector('.page-wrap'); // 截取整个 main 容器
                     
                     const canvas = await html2canvas(container, {
                         backgroundColor: '#ffffff',
                         scale: 1.5,
                         useCORS: true,
                         allowTaint: false,
-                        imageTimeout: 10000,
-                        removeContainer: false,
-                        foreignObjectRendering: false,
-                        logging: false,
-                        width: container.offsetWidth,
-                        height: container.offsetHeight,
-                        x: 0,
-                        y: 0,
-                        scrollX: 0,
-                        scrollY: 0,
-                        windowWidth: window.innerWidth,
-                        windowHeight: window.innerHeight
+                        logging: false
                     });
                     
-                    buttons.style.visibility = 'visible';
+                    if(buttons) buttons.style.visibility = 'visible';
+                    if(navMobile) navMobile.style.display = 'none';
                     
                     const link = document.createElement('a');
                     const now = new Date();
@@ -2876,8 +2631,6 @@ def render_html_content(
                     
                     link.download = filename;
                     link.href = canvas.toDataURL('image/png', 1.0);
-                    
-                    // 触发下载
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -2889,8 +2642,9 @@ def render_html_content(
                     }, 2000);
                     
                 } catch (error) {
-                    const buttons = document.querySelector('.save-buttons');
-                    buttons.style.visibility = 'visible';
+                    console.error("Save As Image Failed:", error);
+                    const buttons = document.querySelector('.header-actions');
+                    if(buttons) buttons.style.visibility = 'visible';
                     button.textContent = '保存失败';
                     setTimeout(() => {
                         button.textContent = originalText;
@@ -2899,10 +2653,11 @@ def render_html_content(
                 }
             }
             
+            // 4. 分段保存 (保留功能，适配新容器)
             async function saveAsMultipleImages() {
                 const button = event.target;
                 const originalText = button.textContent;
-                const container = document.querySelector('.container');
+                const container = document.querySelector('.page-wrap'); // 截取主容器
                 const scale = 1.5; 
                 const maxHeight = 5000 / scale;
                 
@@ -2910,195 +2665,139 @@ def render_html_content(
                     button.textContent = '分析中...';
                     button.disabled = true;
                     
-                    // 获取所有可能的分割元素
-                    const newsItems = Array.from(container.querySelectorAll('.news-item'));
-                    const wordGroups = Array.from(container.querySelectorAll('.word-group'));
-                    const newSection = container.querySelector('.new-section');
-                    const errorSection = container.querySelector('.error-section');
-                    const header = container.querySelector('.header');
-                    const footer = container.querySelector('.footer');
+                    // 针对新 UI 结构选择元素
+                    let cardItems = Array.from(container.querySelectorAll('.group-card'));
+                    const newSection = document.getElementById('newSection'); 
+                    const errorCard = document.querySelector('.error-card'); 
+                    const header = document.querySelector('.header-card'); 
+                    const footer = document.querySelector('.footer');
                     
                     // 计算元素位置和高度
                     const containerRect = container.getBoundingClientRect();
                     const elements = [];
+                    const padding = 10; 
                     
-                    // 添加header作为必须包含的元素
-                    elements.push({
-                        type: 'header',
-                        element: header,
-                        top: 0,
-                        bottom: header.offsetHeight,
-                        height: header.offsetHeight
-                    });
-                    
-                    // 添加错误信息（如果存在）
-                    if (errorSection) {
-                        const rect = errorSection.getBoundingClientRect();
+                    // 添加 header (整个卡片)
+                    if (header) {
+                        const rect = header.getBoundingClientRect();
                         elements.push({
-                            type: 'error',
-                            element: errorSection,
+                            type: 'header',
+                            element: header,
                             top: rect.top - containerRect.top,
-                            bottom: rect.bottom - containerRect.top,
-                            height: rect.height
+                            bottom: rect.bottom - containerRect.top + padding, 
+                            height: rect.height + padding
                         });
                     }
                     
-                    // 按word-group分组处理news-item
-                    wordGroups.forEach(group => {
-                        const groupRect = group.getBoundingClientRect();
-                        const groupNewsItems = group.querySelectorAll('.news-item');
-                        
-                        // 添加word-group的header部分
-                        const wordHeader = group.querySelector('.word-header');
-                        if (wordHeader) {
-                            const headerRect = wordHeader.getBoundingClientRect();
-                            elements.push({
-                                type: 'word-header',
-                                element: wordHeader,
-                                parent: group,
-                                top: groupRect.top - containerRect.top,
-                                bottom: headerRect.bottom - containerRect.top,
-                                height: headerRect.height
-                            });
-                        }
-                        
-                        // 添加每个news-item
-                        groupNewsItems.forEach(item => {
-                            const rect = item.getBoundingClientRect();
-                            elements.push({
-                                type: 'news-item',
-                                element: item,
-                                parent: group,
-                                top: rect.top - containerRect.top,
-                                bottom: rect.bottom - containerRect.top,
-                                height: rect.height
-                            });
+                    // 添加错误卡片
+                    if (errorCard && errorCard.offsetParent !== null) {
+                        const rect = errorCard.getBoundingClientRect();
+                        elements.push({
+                            type: 'error',
+                            element: errorCard,
+                            top: rect.top - containerRect.top - padding,
+                            bottom: rect.bottom - containerRect.top + padding,
+                            height: rect.height + 2 * padding
+                        });
+                    }
+                    
+                    // 添加卡片列表
+                    cardItems.forEach(item => {
+                        const rect = item.getBoundingClientRect();
+                        elements.push({
+                            type: 'card',
+                            element: item,
+                            top: rect.top - containerRect.top - padding, 
+                            bottom: rect.bottom - containerRect.top + padding,
+                            height: rect.height + 2 * padding
                         });
                     });
                     
                     // 添加新增新闻部分
-                    if (newSection) {
+                    if (newSection && newSection.style.display !== 'none') {
                         const rect = newSection.getBoundingClientRect();
                         elements.push({
                             type: 'new-section',
                             element: newSection,
-                            top: rect.top - containerRect.top,
-                            bottom: rect.bottom - containerRect.top,
-                            height: rect.height
+                            top: rect.top - containerRect.top - padding,
+                            bottom: rect.bottom - containerRect.top + padding,
+                            height: rect.height + 2 * padding
                         });
                     }
                     
                     // 添加footer
-                    const footerRect = footer.getBoundingClientRect();
-                    elements.push({
-                        type: 'footer',
-                        element: footer,
-                        top: footerRect.top - containerRect.top,
-                        bottom: footerRect.bottom - containerRect.top,
-                        height: footer.offsetHeight
-                    });
-                    
-                    // 计算分割点
-                    const segments = [];
-                    let currentSegment = { start: 0, end: 0, height: 0, includeHeader: true };
-                    let headerHeight = header.offsetHeight;
-                    currentSegment.height = headerHeight;
-                    
-                    for (let i = 1; i < elements.length; i++) {
-                        const element = elements[i];
-                        const potentialHeight = element.bottom - currentSegment.start;
-                        
-                        // 检查是否需要创建新分段
-                        if (potentialHeight > maxHeight && currentSegment.height > headerHeight) {
-                            // 在前一个元素结束处分割
-                            currentSegment.end = elements[i - 1].bottom;
-                            segments.push(currentSegment);
-                            
-                            // 开始新分段
-                            currentSegment = {
-                                start: currentSegment.end,
-                                end: 0,
-                                height: element.bottom - currentSegment.end,
-                                includeHeader: false
-                            };
-                        } else {
-                            currentSegment.height = potentialHeight;
-                            currentSegment.end = element.bottom;
-                        }
+                    if (footer) {
+                        const rect = footer.getBoundingClientRect();
+                        elements.push({
+                            type: 'footer',
+                            element: footer,
+                            top: rect.top - containerRect.top,
+                            bottom: rect.bottom - containerRect.top + 30, // 底部留白
+                            height: rect.height
+                        });
                     }
                     
-                    // 添加最后一个分段
-                    if (currentSegment.height > 0) {
-                        currentSegment.end = container.offsetHeight;
+                    elements.sort((a, b) => a.top - b.top);
+
+                    // 计算分割点
+                    const segments = [];
+                    let currentSegment = { start: 0, end: 0, height: 0 };
+                    
+                    for (let i = 0; i < elements.length; i++) {
+                        const element = elements[i];
+                        const elementBottom = element.bottom;
+                        
+                        if (elementBottom - currentSegment.start > maxHeight && (element.top - currentSegment.start) > 100) {
+                            currentSegment.end = element.top; 
+                            segments.push(currentSegment);
+                            
+                            currentSegment = {
+                                start: element.top,
+                                end: 0,
+                                height: 0
+                            };
+                        }
+                        currentSegment.end = elementBottom;
+                    }
+                    
+                    if (currentSegment.end > currentSegment.start) {
                         segments.push(currentSegment);
                     }
                     
                     button.textContent = `生成中 (0/${segments.length})...`;
                     
-                    // 隐藏保存按钮
-                    const buttons = document.querySelector('.save-buttons');
-                    buttons.style.visibility = 'hidden';
+                    // 隐藏保存按钮和导航
+                    const buttons = document.querySelector('.header-actions');
+                    if(buttons) buttons.style.visibility = 'hidden';
+                    const navMobile = document.getElementById('navMobile');
+                    if(navMobile) navMobile.style.display = 'none';
                     
-                    // 为每个分段生成图片
                     const images = [];
                     for (let i = 0; i < segments.length; i++) {
                         const segment = segments[i];
                         button.textContent = `生成中 (${i + 1}/${segments.length})...`;
                         
-                        // 创建临时容器用于截图
-                        const tempContainer = document.createElement('div');
-                        tempContainer.style.cssText = `
-                            position: absolute;
-                            left: -9999px;
-                            top: 0;
-                            width: ${container.offsetWidth}px;
-                            background: white;
-                        `;
-                        tempContainer.className = 'container';
-                        
-                        // 克隆容器内容
-                        const clonedContainer = container.cloneNode(true);
-                        
-                        // 移除克隆内容中的保存按钮
-                        const clonedButtons = clonedContainer.querySelector('.save-buttons');
-                        if (clonedButtons) {
-                            clonedButtons.style.display = 'none';
-                        }
-                        
-                        tempContainer.appendChild(clonedContainer);
-                        document.body.appendChild(tempContainer);
-                        
-                        // 等待DOM更新
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        
-                        // 使用html2canvas截取特定区域
-                        const canvas = await html2canvas(clonedContainer, {
+                        const canvas = await html2canvas(container, {
                             backgroundColor: '#ffffff',
                             scale: scale,
                             useCORS: true,
                             allowTaint: false,
-                            imageTimeout: 10000,
                             logging: false,
                             width: container.offsetWidth,
                             height: segment.end - segment.start,
                             x: 0,
-                            y: segment.start,
+                            y: segment.start, // 坐标相对于 .page-wrap
                             windowWidth: window.innerWidth,
                             windowHeight: window.innerHeight
                         });
                         
                         images.push(canvas.toDataURL('image/png', 1.0));
-                        
-                        // 清理临时容器
-                        document.body.removeChild(tempContainer);
                     }
                     
-                    // 恢复按钮显示
-                    buttons.style.visibility = 'visible';
+                    if(buttons) buttons.style.visibility = 'visible';
                     
-                    // 下载所有图片
                     const now = new Date();
-                    const baseFilename = `TrendRadar_热点新闻分析_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+                    const baseFilename = `TrendRadar_分段_${now.getHours()}${String(now.getMinutes()).padStart(2, '0')}`;
                     
                     for (let i = 0; i < images.length; i++) {
                         const link = document.createElement('a');
@@ -3107,8 +2806,6 @@ def render_html_content(
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        
-                        // 延迟一下避免浏览器阻止多个下载
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
                     
@@ -3119,9 +2816,9 @@ def render_html_content(
                     }, 2000);
                     
                 } catch (error) {
-                    console.error('分段保存失败:', error);
-                    const buttons = document.querySelector('.save-buttons');
-                    buttons.style.visibility = 'visible';
+                    console.error("Save As Multiple Images Failed:", error);
+                    const buttons = document.querySelector('.header-actions');
+                    if(buttons) buttons.style.visibility = 'visible';
                     button.textContent = '保存失败';
                     setTimeout(() => {
                         button.textContent = originalText;
@@ -3129,10 +2826,6 @@ def render_html_content(
                     }, 2000);
                 }
             }
-            
-            document.addEventListener('DOMContentLoaded', function() {
-                window.scrollTo(0, 0);
-            });
         </script>
     </body>
     </html>
