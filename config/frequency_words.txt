@@ -1,16 +1,15 @@
 微软
 Microsoft
-
 英特尔
 Intel
+谷歌
+google
 
 英伟达
 NVIDIA
 黄仁勋
 AMD
 
-谷歌
-google
 
 gemini
 deepmind
@@ -21,7 +20,7 @@ claude
 Anthropic
 DeepSeek
 人工智能
-ai
+AI
 !gai
 
 高市早苗
