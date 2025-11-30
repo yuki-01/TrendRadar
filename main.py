@@ -1767,7 +1767,7 @@ def render_html_content(
 
         <style>
         :root{
-            /* 可在这里调整主题色与模糊强度 */
+            /* --- 默认（明亮）模式变量 --- */
             --bg-grad-1: #edf1f7;
             --bg-grad-2: #e9eef8;
             --glass-bg: rgba(255,255,255,0.58);
@@ -1779,6 +1779,9 @@ def render_html_content(
             --text-normal: #1f2937;
             --text-muted: #6b7280;
             --text-invert: #ffffff; /* 白色 */
+            --link-color: var(--primary);
+            --card-hover-shadow: 0 10px 30px rgba(0,0,0,.12);
+            --card-hover-border: rgba(0,0,0,0.06);
 
             --primary: #2563eb; /* 链接与交互蓝 */
             --primary-visited: #7c3aed; /* 已读紫 */
@@ -1793,6 +1796,64 @@ def render_html_content(
             --section-gap: 18px;
         }
 
+        /* --- 黑暗模式变量定义 --- */
+        .dark-mode {
+            /* 背景 */
+            --bg-grad-1: #0f172a; 
+            --bg-grad-2: #1e293b;
+            --glass-bg: rgba(25, 33, 50, 0.58);
+            --glass-dark: rgba(255,255,255,0.6);
+            --glass-border: rgba(255,255,255,0.15);
+            
+            /* 文本 */
+            --text-strong: #f1f5f9; 
+            --text-normal: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-invert: #0f172a; 
+            --link-color: #60a5fa;
+            
+            /* 其他元素颜色反转或调整 */
+            --card-hover-shadow: 0 10px 30px rgba(0,0,0,.35);
+            --card-hover-border: rgba(255,255,255,0.1);
+
+            /* 特殊卡片背景 */
+            .navbar{ 
+                background: linear-gradient(180deg, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.4));
+                border-bottom: 1px solid var(--glass-border);
+            }
+            .group-card{
+                background: linear-gradient(180deg, rgba(25, 33, 50, 0.42), rgba(25, 33, 50, 0.28));
+                border: 1px solid var(--glass-border);
+            }
+            .header-card{
+                background: var(--glass-bg);
+                border: 1px solid var(--glass-border);
+            }
+            .news-item{
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+            .news-number{
+                background: rgba(255,255,255,.1);
+                color: var(--text-normal);
+            }
+            .group-head{
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+            .info-box{
+                background: rgba(255,255,255,0.08);
+                border: 1px dashed rgba(255,255,255,.08);
+            }
+            .error-card{
+                background: rgba(255, 60, 60, 0.15);
+                border: 1px solid rgba(255, 60, 60, 0.5);
+                color: #fca5a5;
+            }
+            .error-title{
+                color: #fecaca;
+            }
+        }
+        
+        /* 通用样式 */
         *{ box-sizing: border-box; }
         html,body{ height:100%; }
         body{
@@ -1800,12 +1861,14 @@ def render_html_content(
             color: var(--text-normal);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC","Hiragino Sans GB","Microsoft YaHei", sans-serif;
             line-height: 1.5;
+            /* 渐变背景 - 使用变量 */
             background:
             radial-gradient(1200px 800px at 10% -10%, #e0e7ff 0%, transparent 50%),
             radial-gradient(1100px 700px at 110% 0%, #fce7f3 0%, transparent 45%),
             radial-gradient(900px 900px at 50% 120%, #dcfce7 0%, transparent 45%),
             linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
             background-attachment: fixed;
+            transition: background-color .3s; /* for smooth mode transition */
         }
 
         /* 顶部导航（透明模糊） */
@@ -1866,9 +1929,26 @@ def render_html_content(
         }
         .nav-link.primary:hover{ filter: brightness(1.03); }
 
-        /* 移动端菜单按钮 */
+        /* 新增：模式切换按钮 */
+        .mode-toggle{
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-strong);
+            cursor: pointer;
+            transition: transform .15s ease, background .2s ease;
+            margin-right: 8px; /* 与 nav-toggle 保持间距或独立 */
+        }
+        .mode-toggle:hover{ background: rgba(0,0,0,0.06); }
+        .mode-toggle:active{ transform: scale(.98); }
+
+        /* 移动端菜单按钮 (保留，但将隐藏) */
         .nav-toggle{
-            display: none;
+            display: none; /* 窄屏不显示下拉菜单按钮 */
             width: 38px; height: 38px;
             border-radius: 10px;
             border: 1px solid var(--glass-border);
@@ -1887,16 +1967,13 @@ def render_html_content(
             backdrop-filter: blur(var(--blur));
             -webkit-backdrop-filter: blur(var(--blur));
         }
-        .nav-mobile a{
-            display: block;
-            text-decoration: none;
-            color: var(--text-strong);
-            font-weight: 600;
-            padding: 10px 10px;
-            border-radius: 10px;
-        }
-        .nav-mobile a:hover{
-            background: rgba(0,0,0,0.06);
+        /* 1. 窄屏去掉下拉菜单的 CSS 修改 */
+        @media (max-width: 560px){
+            .nav-links{ display: flex !important; margin-left: auto; gap: 4px;} 
+            .nav-toggle{ display: none !important; }
+            .nav-mobile{ display: none !important; } /* 确保隐藏 */
+            .nav-link{ padding: 6px 8px; font-size: 13px; }
+            .mode-toggle{ width: 32px; height: 32px; margin-right: 0; }
         }
 
         /* 顶部信息+操作区（玻璃卡片） */
@@ -1905,6 +1982,23 @@ def render_html_content(
             margin: 16px auto;
             padding: 0 14px 20px;
         }
+        /* 3. 卡片悬停效果：公共样式 */
+        .card-effect:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-hover-shadow), 0 0 16px 2px rgba(99,102,241,0.2), 0 0 0 1px var(--card-hover-border);
+            border-color: var(--primary);
+            position: relative;
+        }
+        .card-effect:hover::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: var(--radius);
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(37, 99, 235, 0.1) 0%, transparent 45%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
         .header-card{
             position: relative;
             border-radius: var(--radius);
@@ -1915,7 +2009,9 @@ def render_html_content(
             padding: 16px 16px;
             box-shadow: 0 6px 24px rgba(0,0,0,.06);
             margin-top: 10px;
+            transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
         }
+
         .header-top{
             display: flex;
             align-items: center;
@@ -1969,7 +2065,7 @@ def render_html_content(
             appearance: none; border: none; cursor: pointer;
             padding: 10px 14px; border-radius: 12px;
             background: linear-gradient(135deg,#334155,#0f172a);
-            color: var(--text-invert); font-weight: 700; font-size: 13px;
+            color: #f1f5f9; font-weight: 700; font-size: 13px;
             box-shadow: 0 6px 18px rgba(15,23,42,.25);
             transition: transform .15s ease, filter .2s ease;
         }
@@ -1996,6 +2092,7 @@ def render_html_content(
             -webkit-backdrop-filter: blur(calc(var(--blur) * .9));
             box-shadow: 0 6px 24px rgba(0,0,0,.06);
             padding: 14px 14px;
+            transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
         }
         .group-head{
             display: flex; align-items: center; justify-content: space-between;
@@ -2065,10 +2162,11 @@ def render_html_content(
             margin: 0;
         }
         .news-link{
-            color: var(--primary); text-decoration: none;
+            color: var(--link-color); text-decoration: none;
         }
         .news-link:hover{ text-decoration: underline; }
         .news-link:visited{ color: var(--primary-visited); }
+        .dark-mode .news-link:visited{ color: #a78bfa; }
 
         .tag-new{
             position: absolute; right: 0; top: 8px;
@@ -2084,12 +2182,13 @@ def render_html_content(
         .new-section{
             border-radius: var(--radius);
             border: 1px solid var(--glass-border);
-            background: linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.35));
+            /* background: linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.28)); */
             backdrop-filter: blur(var(--blur));
             -webkit-backdrop-filter: blur(var(--blur));
             box-shadow: 0 6px 24px rgba(0,0,0,.06);
             padding: 14px;
             margin-top: 16px;
+            transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
         }
         .new-title{
             font-size: 16px; font-weight: 900; color: var(--text-strong);
@@ -2134,6 +2233,7 @@ def render_html_content(
             padding: 12px 14px;
             color: #991b1b;
             margin: 16px 0;
+            transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
         }
         .error-title{
             font-weight: 900; font-size: 14px; margin-bottom: 6px;
@@ -2147,7 +2247,7 @@ def render_html_content(
             margin-top: 18px;
             border-radius: var(--radius);
             border: 1px solid var(--glass-border);
-            background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.35));
+            background: linear-gradient(180deg, rgba(255,255,255,0.0), rgba(255,255,255,0.0));
             backdrop-filter: blur(var(--blur));
             -webkit-backdrop-filter: blur(var(--blur));
             padding: 14px;
@@ -2159,20 +2259,21 @@ def render_html_content(
             color: #374151; font-weight: 700; text-decoration: none;
         }
         .footer a:hover{ text-decoration: underline; }
+        .dark-mode .footer a{
+            color: #e2e8f0;
+        }
 
         /* 响应式细节优化 */
         @media (max-width: 820px){
             .header-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
         }
         @media (max-width: 560px){
-            .nav-links{ display: none; }
-            .nav-toggle{ display: inline-flex; margin-left: auto; }
             .header-grid{ grid-template-columns: 1fr 1fr; }
             .page-wrap{ padding-bottom: 26px; }
         }
         </style>
     </head>
-    <body>
+    <body onmousemove="updateMousePosition(event)">
         <nav class="navbar">
         <div class="nav-inner">
             <div class="brand">
@@ -2181,6 +2282,23 @@ def render_html_content(
             </div>
 
             <div class="nav-spacer"></div>
+
+            <button class="mode-toggle" onclick="toggleDarkMode()" aria-label="切换明亮/黑暗模式">
+                <svg id="moonIcon" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <svg id="sunIcon" style="display:block;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </button>
 
             <div class="nav-links" aria-label="主导航">
             <a class="nav-link primary" href="https://news.nekobox.xyz" target="_self" rel="noopener">新闻</a>
@@ -2203,7 +2321,7 @@ def render_html_content(
         </nav>
 
         <main class="page-wrap">
-        <section class="header-card">
+        <section class="header-card card-effect">
             <div class="header-top">
             <div class="title">热点新闻分析</div>
             <div class="badges">
@@ -2261,8 +2379,8 @@ def render_html_content(
             </div>
             
             <div class="header-actions">
-                <button class="btn" onclick="saveAsImage()">保存为图片</button>
-                <button class="btn" onclick="saveAsMultipleImages()">分段保存</button>
+                <button class="btn" onclick="saveAsImage(event)">保存为图片</button>
+                <button class="btn" onclick="saveAsMultipleImages(event)">分段保存</button>
             </div>
         </section>
 
@@ -2271,7 +2389,7 @@ def render_html_content(
         <section class="content-grid" id="groupsHost">
             </section>
 
-        <section class="new-section" id="newSection" style="display:none">
+        <section class="new-section card-effect" id="newSection" style="display:none">
             <div class="new-title" id="newTitleText">本次新增热点</div>
             <div id="newList"></div>
         </section>
@@ -2345,7 +2463,7 @@ def render_html_content(
 
                     rank_text = str(min_rank) if min_rank == max_rank else f"{min_rank}-{max_rank}"
 
-                    html += f'<span class="rank-num {rank_class}">{rank_text}</span>'
+                    html += f'<span class="rank-chip {rank_class}">{rank_text}</span>'
 
                 # Time display
                 time_display = title_data.get("time_display", "")
@@ -2465,7 +2583,22 @@ def render_html_content(
         </main>
         
         <script>
-            // 1. 移动端导航控制
+            // 鼠标位置跟踪，用于卡片光效
+            let mouseX = 0;
+            let mouseY = 0;
+            function updateMousePosition(event) {
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+                document.querySelectorAll('.card-effect').forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const localX = mouseX - rect.left;
+                    const localY = mouseY - rect.top;
+                    card.style.setProperty('--mouse-x', `${localX}px`);
+                    card.style.setProperty('--mouse-y', `${localY}px`);
+                });
+            }
+
+            // 1. 移动端导航控制 (保留，但由于CSS修改已失效)
             function toggleMobileNav(){
                 const el = document.getElementById('navMobile');
                 if(!el) return;
@@ -2473,8 +2606,35 @@ def render_html_content(
                 el.style.display = (el.style.display === 'block') ? 'none' : 'block';
             }
 
-            // 2. 页面加载与UI重构逻辑 (将原始结构转换为卡片样式)
+            // 2. 明暗模式切换逻辑
+            function toggleDarkMode() {
+                const isDark = document.body.classList.toggle('dark-mode');
+                // 更新localStorage
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                // 更新图标
+                document.getElementById('sunIcon').style.display = isDark ? 'none' : 'block';
+                document.getElementById('moonIcon').style.display = isDark ? 'block' : 'none';
+            }
+            
+            // 页面加载时检查模式
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('sunIcon').style.display = 'none';
+                    document.getElementById('moonIcon').style.display = 'block';
+                } else {
+                    document.getElementById('sunIcon').style.display = 'block';
+                    document.getElementById('moonIcon').style.display = 'none';
+                }
+            }
+
+            // 3. 页面加载与UI重构逻辑 (将原始结构转换为卡片样式)
             document.addEventListener('DOMContentLoaded', function(){
+                loadTheme(); // 加载主题
+                
                 const container = document.querySelector('.content'); // 原始数据容器
 
                 // A. 填充顶部的统计信息
@@ -2497,7 +2657,7 @@ def render_html_content(
                     const errs = failedBlock.querySelectorAll('.error-item'); 
                     if(errs.length){
                         const card = document.createElement('div');
-                        card.className = 'error-card'; 
+                        card.className = 'error-card card-effect'; // 增加 card-effect
                         card.innerHTML = '<div class="error-title">⚠️ 请求失败的平台</div>';
                         const ul = document.createElement('ul');
                         ul.className = 'error-list';
@@ -2522,7 +2682,7 @@ def render_html_content(
                         const items = g.querySelectorAll('.news-item');
 
                         const card = document.createElement('div');
-                        card.className = 'group-card'; 
+                        card.className = 'group-card card-effect'; // 增加 card-effect
 
                         // 头部
                         const headDiv = document.createElement('div');
@@ -2594,8 +2754,8 @@ def render_html_content(
                 }
             });
 
-            // 3. 保存为单张图片 (保留功能，适配新容器)
-            async function saveAsImage() {
+            // 4. 保存为单张图片 (保留功能，适配新容器)
+            async function saveAsImage(event) {
                 const button = event.target;
                 const originalText = button.textContent;
                 
@@ -2653,8 +2813,8 @@ def render_html_content(
                 }
             }
             
-            // 4. 分段保存 (保留功能，适配新容器)
-            async function saveAsMultipleImages() {
+            // 5. 分段保存 (保留功能，适配新容器)
+            async function saveAsMultipleImages(event) {
                 const button = event.target;
                 const originalText = button.textContent;
                 const container = document.querySelector('.page-wrap'); // 截取主容器
@@ -2832,7 +2992,6 @@ def render_html_content(
     """
 
     return html
-
 
 def render_feishu_content(
     report_data: Dict, update_info: Optional[Dict] = None, mode: str = "daily"
